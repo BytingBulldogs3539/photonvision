@@ -44,9 +44,7 @@ export const useSettingsStore = defineStore("settings", {
           connName: "Example Wired Connection",
           devName: "eth0"
         }
-      ],
-      networkingDisabled: false,
-      matchCamerasOnlyByPath: false
+      ]
     },
     lighting: {
       supported: true,
@@ -61,8 +59,7 @@ export const useSettingsStore = defineStore("settings", {
       gpuMemUtil: undefined,
       cpuThr: undefined,
       cpuUptime: undefined,
-      diskUtilPct: undefined,
-      npuUsage: undefined
+      diskUtilPct: undefined
     },
     currentFieldLayout: {
       field: {
@@ -94,8 +91,7 @@ export const useSettingsStore = defineStore("settings", {
         gpuMemUtil: data.gpuMemUtil || undefined,
         cpuThr: data.cpuThr || undefined,
         cpuUptime: data.cpuUptime || undefined,
-        diskUtilPct: data.diskUtilPct || undefined,
-        npuUsage: data.npuUsage || undefined
+        diskUtilPct: data.diskUtilPct || undefined
       };
     },
     updateGeneralSettingsFromWebsocket(data: WebsocketSettingsUpdate) {

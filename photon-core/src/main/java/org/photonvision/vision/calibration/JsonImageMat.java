@@ -76,17 +76,4 @@ public class JsonImageMat implements Releasable {
     public void release() {
         if (wrappedMat != null) wrappedMat.release();
     }
-
-    @Override
-    public String toString() {
-        return "JsonImageMat [rows="
-                + rows
-                + ", cols="
-                + cols
-                + ", type="
-                + type
-                + ", datalen="
-                + data.length()
-                + "]";
-    }
 }

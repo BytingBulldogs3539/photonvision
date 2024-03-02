@@ -145,7 +145,8 @@ public class HardwareManager {
         logger.info("Shutting down LEDs...");
         if (visionLED != null) visionLED.setState(false);
 
-        ConfigManager.getInstance().onJvmExit();
+        logger.info("Force-flushing settings...");
+        ConfigManager.getInstance().saveToDisk();
     }
 
     public boolean restartDevice() {

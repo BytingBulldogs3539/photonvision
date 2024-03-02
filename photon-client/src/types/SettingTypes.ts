@@ -20,7 +20,6 @@ export interface MetricData {
   cpuThr?: string;
   cpuUptime?: string;
   diskUtilPct?: string;
-  npuUsage?: string;
 }
 
 export enum NetworkConnectionType {
@@ -46,14 +45,9 @@ export interface NetworkSettings {
   setStaticCommand?: string;
   setDHCPcommand?: string;
   networkInterfaceNames: NetworkInterfaceType[];
-  networkingDisabled: boolean;
-  matchCamerasOnlyByPath: boolean;
 }
 
-export type ConfigurableNetworkSettings = Omit<
-  NetworkSettings,
-  "canManage" | "networkInterfaceNames" | "networkingDisabled"
->;
+export type ConfigurableNetworkSettings = Omit<NetworkSettings, "canManage" | "networkInterfaceNames">;
 
 export interface LightingSettings {
   supported: boolean;
@@ -140,9 +134,6 @@ export interface CameraCalibrationResult {
   distCoeffs: JsonMatOfDouble;
   observations: BoardObservation[];
   calobjectWarp?: number[];
-  // We might have to omit observations for bandwith, so backend will send us this
-  numSnapshots: number;
-  meanErrors: number[];
 }
 
 export enum ValidQuirks {
@@ -260,9 +251,7 @@ export const PlaceholderCameraSettings: CameraSettings = {
           snapshotName: "img0.png",
           snapshotData: { rows: 480, cols: 640, type: CvType.CV_8U, data: "" }
         }
-      ],
-      numSnapshots: 1,
-      meanErrors: [123.45]
+      ]
     }
   ],
   pipelineNicknames: ["Placeholder Pipeline"],

@@ -5,11 +5,12 @@ import PvInput from "@/components/common/pv-input.vue";
 import PvRadio from "@/components/common/pv-radio.vue";
 import PvSwitch from "@/components/common/pv-switch.vue";
 import PvSelect from "@/components/common/pv-select.vue";
-import { type ConfigurableNetworkSettings, NetworkConnectionType } from "@/types/SettingTypes";
+import { NetworkConnectionType, type NetworkSettings } from "@/types/SettingTypes";
 import { useStateStore } from "@/stores/StateStore";
 
 // Copy object to remove reference to store
-const tempSettingsStruct = ref<ConfigurableNetworkSettings>(Object.assign({}, useSettingsStore().network));
+const tempSettingsStruct = ref<NetworkSettings>(Object.assign({}, useSettingsStore().network));
+
 const resetTempSettingsStruct = () => {
   tempSettingsStruct.value = Object.assign({}, useSettingsStore().network);
 };
@@ -57,10 +58,10 @@ const settingsHaveChanged = (): boolean => {
     a.runNTServer !== b.runNTServer ||
     a.shouldManage !== b.shouldManage ||
     a.shouldPublishProto !== b.shouldPublishProto ||
+    a.canManage !== b.canManage ||
     a.networkManagerIface !== b.networkManagerIface ||
     a.setStaticCommand !== b.setStaticCommand ||
-    a.setDHCPcommand !== b.setDHCPcommand ||
-    a.matchCamerasOnlyByPath !== b.matchCamerasOnlyByPath
+    a.setDHCPcommand !== b.setDHCPcommand
   );
 };
 
@@ -78,7 +79,6 @@ const saveGeneralSettings = () => {
     setStaticCommand: tempSettingsStruct.value.setStaticCommand || "",
     shouldManage: tempSettingsStruct.value.shouldManage,
     shouldPublishProto: tempSettingsStruct.value.shouldPublishProto,
-    matchCamerasOnlyByPath: tempSettingsStruct.value.matchCamerasOnlyByPath,
     staticIp: tempSettingsStruct.value.staticIp
   };
 
@@ -91,10 +91,7 @@ const saveGeneralSettings = () => {
       });
 
       // Update the local settings cause the backend checked their validity. Assign is to deref value
-      useSettingsStore().network = {
-        ...useSettingsStore().network,
-        ...Object.assign({}, tempSettingsStruct.value)
-      };
+      useSettingsStore().network = Object.assign({}, tempSettingsStruct.value);
     })
     .catch((error) => {
       resetTempSettingsStruct();
@@ -139,8 +136,6 @@ watchEffect(() => {
 
 <template>
   <v-card dark class="mb-3 pr-6 pb-3" style="background-color: #006492">
-    <v-card-title>Global Settings</v-card-title>
-    <v-divider />
     <v-card-title>Networking</v-card-title>
     <div class="ml-5">
       <v-form ref="form" v-model="settingsValid">
@@ -167,63 +162,42 @@ watchEffect(() => {
           The NetworkTables Server Address is not set or is invalid. NetworkTables is unable to connect.
         </v-banner>
         <pv-radio
-          v-show="!useSettingsStore().network.networkingDisabled"
           v-model="tempSettingsStruct.connectionType"
           label="IP Assignment Mode"
           tooltip="DHCP will make the radio (router) automatically assign an IP address; this may result in an IP address that changes across reboots. Static IP assignment means that you pick the IP address and it won't change."
           :input-cols="12 - 4"
           :list="['DHCP', 'Static']"
-          :disabled="
-            !tempSettingsStruct.shouldManage ||
-            !useSettingsStore().network.canManage ||
-            useSettingsStore().network.networkingDisabled
-          "
+          :disabled="!(tempSettingsStruct.shouldManage && tempSettingsStruct.canManage)"
         />
         <pv-input
-          v-show="!useSettingsStore().network.networkingDisabled"
           v-if="tempSettingsStruct.connectionType === NetworkConnectionType.Static"
           v-model="tempSettingsStruct.staticIp"
           :input-cols="12 - 4"
           label="Static IP"
           :rules="[(v) => isValidIPv4(v) || 'Invalid IPv4 address']"
-          :disabled="
-            !tempSettingsStruct.shouldManage ||
-            !useSettingsStore().network.canManage ||
-            useSettingsStore().network.networkingDisabled
-          "
+          :disabled="!(tempSettingsStruct.shouldManage && tempSettingsStruct.canManage)"
         />
         <pv-input
-          v-show="!useSettingsStore().network.networkingDisabled"
           v-model="tempSettingsStruct.hostname"
           label="Hostname"
           :input-cols="12 - 4"
           :rules="[(v) => isValidHostname(v) || 'Invalid hostname']"
-          :disabled="
-            !tempSettingsStruct.shouldManage ||
-            !useSettingsStore().network.canManage ||
-            useSettingsStore().network.networkingDisabled
-          "
+          :disabled="!(tempSettingsStruct.shouldManage && tempSettingsStruct.canManage)"
         />
         <v-divider class="pb-3" />
         <span style="font-weight: 700">Advanced Networking</span>
         <pv-switch
-          v-show="!useSettingsStore().network.networkingDisabled"
           v-model="tempSettingsStruct.shouldManage"
-          :disabled="!useSettingsStore().network.canManage || useSettingsStore().network.networkingDisabled"
+          :disabled="!tempSettingsStruct.canManage"
           label="Manage Device Networking"
           tooltip="If enabled, Photon will manage device hostname and network settings."
           :label-cols="4"
           class="pt-2"
         />
         <pv-select
-          v-show="!useSettingsStore().network.networkingDisabled"
           v-model="currentNetworkInterfaceIndex"
           label="NetworkManager interface"
-          :disabled="
-            !tempSettingsStruct.shouldManage ||
-            !useSettingsStore().network.canManage ||
-            useSettingsStore().network.networkingDisabled
-          "
+          :disabled="!(tempSettingsStruct.shouldManage && tempSettingsStruct.canManage)"
           :select-cols="12 - 4"
           tooltip="Name of the interface PhotonVision should manage the IP address of"
           :items="useSettingsStore().networkInterfaceNames"
@@ -232,8 +206,7 @@ watchEffect(() => {
           v-show="
             !useSettingsStore().networkInterfaceNames.length &&
             tempSettingsStruct.shouldManage &&
-            useSettingsStore().network.canManage &&
-            !useSettingsStore().network.networkingDisabled
+            tempSettingsStruct.canManage
           "
           rounded
           color="red"
@@ -258,9 +231,6 @@ watchEffect(() => {
         >
           This mode is intended for debugging; it should be off for proper usage. PhotonLib will NOT work!
         </v-banner>
-
-        <v-divider />
-        <v-card-title>Miscellaneous</v-card-title>
         <pv-switch
           v-model="tempSettingsStruct.shouldPublishProto"
           label="Also Publish Protobuf"
@@ -279,32 +249,6 @@ watchEffect(() => {
           This mode is intended for debugging; it should be off for field use. You may notice a performance hit by using
           this mode.
         </v-banner>
-        <pv-switch
-          v-model="tempSettingsStruct.matchCamerasOnlyByPath"
-          label="Strictly match ONLY known cameras"
-          tooltip="ONLY match cameras by the USB port they're plugged into + (basename or USB VID/PID), and never only by the device product string. Also disables automatic detection of new cameras."
-          class="mt-3 mb-2"
-          :label-cols="4"
-        />
-        <v-banner
-          v-show="tempSettingsStruct.matchCamerasOnlyByPath"
-          rounded
-          color="red"
-          class="mb-3"
-          text-color="white"
-          icon="mdi-information-outline"
-        >
-          Physical cameras will be strictly matched to camera configurations using physical USB port they are plugged
-          into, in addition to device name and other USB metadata. Additionally, no new cameras are allowed to be added.
-          This setting is useful for guaranteeing that an already known and configured camera can never be matched as an
-          "unknown"/"new" camera, which resets pipelines and calibration data.
-          <p />
-          Cameras will NOT be matched if they change USB ports, and new cameras plugged into this coprocessor will NOT
-          be automatically recognized or configured for vision processing.
-          <p />
-          To add a new camera to this coprocessor, disable this setting, connect the camera, and re-enable.
-        </v-banner>
-        <v-divider class="mb-3" />
       </v-form>
       <v-btn
         color="accent"

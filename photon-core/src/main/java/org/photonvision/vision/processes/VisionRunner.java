@@ -98,7 +98,8 @@ public class VisionRunner {
                 var pipelineResult = pipeline.run(frame, cameraQuirks);
                 pipelineResultConsumer.accept(pipelineResult);
             } catch (Exception ex) {
-                logger.error("Exception on loop " + loopCount, ex);
+                logger.error("Exception on loop " + loopCount);
+                ex.printStackTrace();
             }
 
             loopCount++;

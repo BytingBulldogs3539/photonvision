@@ -80,9 +80,6 @@ if [[ "$DISTRO" = "Ubuntu" && "$INSTALL_NETWORK_MANAGER" != "true" && -z "$QUIET
   fi
 fi
 
-echo "Update package list"
-apt-get update
-
 echo "Installing curl..."
 apt-get install --yes curl
 echo "curl installation complete."
@@ -134,13 +131,6 @@ fi
 
 echo "Installing additional math packages"
 apt-get install --yes libcholmod3 liblapack3 libsuitesparseconfig5
-
-echo "Installing v4l-utils..."
-apt-get install --yes v4l-utils
-echo "v4l-utils installation complete."
-
-echo "Installing sqlite3"
-apt-get install --yes sqlite3
 
 echo "Downloading latest stable release of PhotonVision..."
 mkdir -p /opt/photonvision

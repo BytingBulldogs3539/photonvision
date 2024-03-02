@@ -53,7 +53,6 @@ public class MrCalJNILoader extends PhotonJNICommon {
                             "libcolamd",
                             "libccolamd",
                             "openblas",
-                            "libwinpthread-1",
                             "libgcc_s_seh-1",
                             "libquadmath-0",
                             "libgfortran-5",

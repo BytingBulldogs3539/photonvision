@@ -17,6 +17,7 @@ class PhotonPipelineResult:
         self.latencyMillis = packet.decodeDouble()
         targetCount = packet.decode8()
 
+        print(f"targetCount = {targetCount}")
         for _ in range(targetCount):
             target = PhotonTrackedTarget()
             target.createFromPacket(packet)
@@ -38,6 +39,3 @@ class PhotonPipelineResult:
 
     def getTargets(self) -> list[PhotonTrackedTarget]:
         return self.targets
-
-    def hasTargets(self) -> bool:
-        return len(self.targets) > 0

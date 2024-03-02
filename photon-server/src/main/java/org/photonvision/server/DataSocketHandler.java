@@ -350,7 +350,8 @@ public class DataSocketHandler {
         }
     }
 
-    private void sendMessage(ByteBuffer b, WsContext user) throws JsonProcessingException {
+    private void sendMessage(Object message, WsContext user) throws JsonProcessingException {
+        ByteBuffer b = ByteBuffer.wrap(objectMapper.writeValueAsBytes(message));
         if (user.session.isOpen()) {
             user.send(b);
         }
@@ -358,18 +359,16 @@ public class DataSocketHandler {
 
     public void broadcastMessage(Object message, WsContext userToSkip)
             throws JsonProcessingException {
-        ByteBuffer b = ByteBuffer.wrap(objectMapper.writeValueAsBytes(message));
-
         if (userToSkip == null) {
             for (WsContext user : users) {
-                sendMessage(b, user);
+                sendMessage(message, user);
             }
         } else {
             var skipUserPort = ((InetSocketAddress) userToSkip.session.getRemoteAddress()).getPort();
             for (WsContext user : users) {
                 var userPort = ((InetSocketAddress) user.session.getRemoteAddress()).getPort();
                 if (userPort != skipUserPort) {
-                    sendMessage(b, user);
+                    sendMessage(message, user);
                 }
             }
         }
