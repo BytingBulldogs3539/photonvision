@@ -28,6 +28,7 @@ import org.photonvision.common.hardware.metrics.cmds.CmdBase;
 import org.photonvision.common.hardware.metrics.cmds.FileCmds;
 import org.photonvision.common.hardware.metrics.cmds.LinuxCmds;
 import org.photonvision.common.hardware.metrics.cmds.PiCmds;
+import org.photonvision.common.hardware.metrics.cmds.RK3588Cmds;
 import org.photonvision.common.logging.LogGroup;
 import org.photonvision.common.logging.Logger;
 import org.photonvision.common.util.ShellExec;
@@ -44,6 +45,8 @@ public class MetricsManager {
             cmds = new FileCmds();
         } else if (Platform.isRaspberryPi()) {
             cmds = new PiCmds(); // Pi's can use a hardcoded command set
+        } else if (Platform.isRK3588()) {
+            cmds = new RK3588Cmds(); // RK3588 chipset hardcoded command set
         } else if (Platform.isLinux()) {
             cmds = new LinuxCmds(); // Linux/Unix platforms assume a nominal command set
         } else {
@@ -89,6 +92,10 @@ public class MetricsManager {
         return safeExecute(cmds.cpuThrottleReasonCmd);
     }
 
+    public String getNpuUsage() {
+        return safeExecute(cmds.npuUsageCommand);
+    }
+
     private String gpuMemSave = null;
 
     public String getGPUMemorySplit() {
@@ -125,6 +132,7 @@ public class MetricsManager {
         metrics.put("ramUtil", this.getUsedRam());
         metrics.put("gpuMemUtil", this.getMallocedMemory());
         metrics.put("diskUtilPct", this.getUsedDiskPct());
+        metrics.put("npuUsage", this.getNpuUsage());
 
         DataChangeService.getInstance().publishEvent(OutgoingUIEvent.wrappedOf("metrics", metrics));
     }

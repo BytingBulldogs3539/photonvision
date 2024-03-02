@@ -25,15 +25,10 @@ const getUniqueVideoFormatsByResolution = (): VideoFormat[] => {
 
       const calib = useCameraSettingsStore().getCalibrationCoeffs(format.resolution);
       if (calib !== undefined) {
-        // Is this the right formula for RMS error? who knows! not me!
-        const perViewSumSquareReprojectionError = calib.observations.flatMap((it) =>
-          it.reprojectionErrors.flatMap((it2) => [it2.x, it2.y])
-        );
         // For each error, square it, sum the squares, and divide by total points N
-        format.mean = Math.sqrt(
-          perViewSumSquareReprojectionError.map((it) => Math.pow(it, 2)).reduce((a, b) => a + b, 0) /
-            perViewSumSquareReprojectionError.length
-        );
+        if (calib.meanErrors.length)
+          format.mean = calib.meanErrors.reduce((a, b) => a + b, 0) / calib.meanErrors.length;
+        else format.mean = NaN;
 
         format.horizontalFOV =
           2 * Math.atan2(format.resolution.width / 2, calib.cameraIntrinsics.data[0]) * (180 / Math.PI);
@@ -109,7 +104,7 @@ const downloadCalibBoard = () => {
           const yPos = chessboardStartY + squareY * squareSizeIn.value;
 
           // Only draw the odd squares to create the chessboard pattern
-          if ((xPos + yPos + 0.25) % 2 === 0) {
+          if (squareY % 2 != squareX % 2) {
             doc.rect(xPos, yPos, squareSizeIn.value, squareSizeIn.value, "F");
           }
         }
@@ -263,7 +258,7 @@ const setSelectedVideoFormat = (format: VideoFormat) => {
               >
                 <td>{{ getResolutionString(value.resolution) }}</td>
                 <td>
-                  {{ value.mean !== undefined ? (isNaN(value.mean) ? "NaN" : value.mean.toFixed(2) + "px") : "-" }}
+                  {{ value.mean !== undefined ? (isNaN(value.mean) ? "Unknown" : value.mean.toFixed(2) + "px") : "-" }}
                 </td>
                 <td>{{ value.horizontalFOV !== undefined ? value.horizontalFOV.toFixed(2) + "°" : "-" }}</td>
                 <td>{{ value.verticalFOV !== undefined ? value.verticalFOV.toFixed(2) + "°" : "-" }}</td>
@@ -311,7 +306,7 @@ const setSelectedVideoFormat = (format: VideoFormat) => {
             />
             <pv-number-input
               v-model="patternWidth"
-              label="Board Width (in)"
+              label="Board Width (squares)"
               tooltip="Width of the board in dots or chessboard squares"
               :disabled="isCalibrating"
               :rules="[(v) => v >= 4 || 'Width must be at least 4']"
@@ -319,7 +314,7 @@ const setSelectedVideoFormat = (format: VideoFormat) => {
             />
             <pv-number-input
               v-model="patternHeight"
-              label="Board Height (in)"
+              label="Board Height (squares)"
               tooltip="Height of the board in dots or chessboard squares"
               :disabled="isCalibrating"
               :rules="[(v) => v >= 4 || 'Height must be at least 4']"

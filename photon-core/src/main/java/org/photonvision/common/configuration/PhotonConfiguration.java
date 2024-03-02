@@ -25,12 +25,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import org.photonvision.PhotonVersion;
 import org.photonvision.common.hardware.Platform;
+import org.photonvision.common.networking.NetworkManager;
 import org.photonvision.common.networking.NetworkUtils;
 import org.photonvision.common.util.SerializationUtils;
 import org.photonvision.jni.RknnDetectorJNI;
 import org.photonvision.mrcal.MrCalJNILoader;
 import org.photonvision.raspi.LibCameraJNILoader;
-import org.photonvision.vision.calibration.CameraCalibrationCoefficients;
+import org.photonvision.vision.calibration.UICameraCalibrationCoefficients;
 import org.photonvision.vision.camera.QuirkyCamera;
 import org.photonvision.vision.processes.VisionModule;
 import org.photonvision.vision.processes.VisionModuleManager;
@@ -121,15 +122,9 @@ public class PhotonConfiguration {
         // Hack active interfaces into networkSettings
         var netConfigMap = networkConfig.toHashMap();
         netConfigMap.put("networkInterfaceNames", NetworkUtils.getAllWiredInterfaces());
+        netConfigMap.put("networkingDisabled", NetworkManager.getInstance().networkingIsDisabled);
 
         settingsSubmap.put("networkSettings", netConfigMap);
-
-        map.put(
-                "cameraSettings",
-                VisionModuleManager.getInstance().getModules().stream()
-                        .map(VisionModule::toUICameraConfig)
-                        .map(SerializationUtils::objectToHashMap)
-                        .collect(Collectors.toList()));
 
         var lightingConfig = new UILightingConfig();
         lightingConfig.brightness = hardwareSettings.ledBrightnessPercentage;
@@ -179,7 +174,7 @@ public class PhotonConfiguration {
         public HashMap<Integer, HashMap<String, Object>> videoFormatList;
         public int outputStreamPort;
         public int inputStreamPort;
-        public List<CameraCalibrationCoefficients> calibrations;
+        public List<UICameraCalibrationCoefficients> calibrations;
         public boolean isFovConfigurable = true;
         public QuirkyCamera cameraQuirks;
         public boolean isCSICamera;
